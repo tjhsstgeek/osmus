@@ -1,3 +1,5 @@
+var fs = require("fs");
+
 function LevelGenerator(params) {
   this.blobCount = params.blobCount;
   this.maxSpeed= params.maxSpeed;
@@ -7,7 +9,9 @@ function LevelGenerator(params) {
 
   this.lastId = 0;
 }
-
+LevelGenerator.prototype.loadLevel = function (n) {
+	return JSON.stringify(fs.readFileSync("levels/" + n));
+}
 LevelGenerator.prototype.generate = function() {
   var state = {
     objects: {},

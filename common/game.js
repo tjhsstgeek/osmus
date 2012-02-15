@@ -20,10 +20,21 @@ Game.UPDATE_INTERVAL = Math.round(1000 / 30);
 Game.MAX_DELTA = 10000;
 Game.WIDTH = 640;
 Game.HEIGHT = 480;
-Game.SHOT_AREA_RATIO = 0.02;
-Game.SHOT_SPEED_RATIO = 1;
-Game.PLAYER_SPEED_RATIO = 0.1;
-Game.TRANSFER_RATE = 0.05;
+/**
+ * How much mass is shot.
+ */
+Game.SHOT_AREA_RATIO = 0.01;
+/**
+ * What is the speed of shot particles relative to the player blob.
+ */
+Game.SHOT_SPEED = 2;
+/**
+ * How much energy should one shot particle give to the player blob.
+ * Values near one are realistic.
+ * Values near zero give more speed to the player per shot.
+ */
+Game.SHOT_ENERGY_RATIO = 0.2;
+Game.TRANSFER_RATE = 1;//0.05
 Game.TARGET_LATENCY = 1000; // Maximum latency skew.
 Game.RESTART_DELAY = 1000;
 
@@ -132,6 +143,7 @@ Game.prototype.over = function() {
  */
 Game.prototype.join = function(id) {
   var x, y, vx, vy;
+  // This should actually be retrieved from a file or randomly generated
   switch (this.getPlayerCount() % 4) {
     case 0:
       x = 0; y = 0; vx = 0.1; vy = 0.1;
@@ -181,8 +193,8 @@ Game.prototype.shoot = function(id, direction, timeStamp) {
   // Create the new blob.
   var blob = new Blob({
     id: this.newId_(),
-    vx: player.vx + ex * Game.SHOT_SPEED_RATIO,
-    vy: player.vy + ey * Game.SHOT_SPEED_RATIO,
+    vx: player.vx + ex * Game.SHOT_SPEED,
+    vy: player.vy + ey * Game.SHOT_SPEED,
     r: 0
   });
   this.state.objects[blob.id] = blob;
@@ -190,8 +202,13 @@ Game.prototype.shoot = function(id, direction, timeStamp) {
   blob.x = player.x + (player.r + blob.r) * ex;
   blob.y = player.y + (player.r + blob.r) * ey;
   // Affect the player's velocity, depending on angle, speed and size.
-  player.vx -= ex * Game.PLAYER_SPEED_RATIO;
-  player.vy -= ey * Game.PLAYER_SPEED_RATIO;
+  var dx = -(Game.SHOT_AREA_RATIO * ex * Game.SHOT_SPEED) /
+           ((1 - Game.SHOT_AREA_RATIO) * Game.SHOT_ENERGY_RATIO);
+  var dy = -(Game.SHOT_AREA_RATIO * ey * Game.SHOT_SPEED) /
+           ((1 - Game.SHOT_AREA_RATIO) * Game.SHOT_ENERGY_RATIO);
+  console.log('dx', dx, 'dy', dy, 'ex', ex, 'ey', ey);
+  player.vx += dx;
+  player.vy += dy;
   // Affect blob and player radius.
   blob.transferArea(diff);
   player.transferArea(-diff);
@@ -285,10 +302,16 @@ Game.prototype.transferAreas_ = function(o, p, delta) {
     big = p;
     small = o;
   }
+  //??? Overlap appears to return a distance not area
   var overlap = big.overlap(small);
-
+  var adiff = small.area() - Math.PI * (small.r - overlap) * (small.r - overlap);
   //console.log('overlapping', o.id, p.id, 'by', overlap);
-  var diff = overlap * Game.TRANSFER_RATE;
+  var diff = (adiff) * Game.TRANSFER_RATE;
+  //Transfer momentum
+  var a_b = big.area();
+  big.vx = (a_b * big.vx + diff * small.vx) / (a_b + diff);
+  big.vy = (a_b * big.vy + diff * small.vy) / (a_b + diff);
+  //Transfer area
   small.transferArea(-diff);
   big.transferArea(diff);
 
@@ -392,7 +415,11 @@ Blob.prototype.overlap = function(blob) {
   var overlap = blob.r + this.r - this.distanceFrom(blob);
   return (overlap > 0 ? overlap : 0);
 };
-
+/**
+ * Determines if two blobs are overlapping
+ * @deprecated Use Blob.overlap instead
+ * @returns {bool} Whether two blobs overlap
+ */
 Blob.prototype.intersects = function(blob) {
   return this.distanceFrom(blob) < blob.r + this.r;
 };
@@ -407,13 +434,10 @@ Blob.prototype.area = function() {
 
 /**
  * Transfers some area to (or from if area < 0) this blob.
+ * Doesn't affect velocity.
  */
 Blob.prototype.transferArea = function(area) {
-  var sign = 1;
-  if (area < 0) {
-    sign = -1;
-  }
-  this.r += sign * Math.sqrt(Math.abs(area) / Math.PI);
+  this.r = Math.sqrt(this.r * this.r + area / Math.PI);
 };
 
 /**
