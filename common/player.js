@@ -1,8 +1,11 @@
 (function(exports) {
 
-var player = function(x, y, vx, vy, r, m, client) {
-	blob.call(this, x, y, vx, vy, r, m);
-	this.type = engine.PLAYER;
+var __blob = new require('../common/blob.js');
+var blob = __blob.blob;
+
+var player = function(e, x, y, vx, vy, r, m, client) {
+	blob.call(this, e, x, y, vx, vy, r, m);
+	this.type = e.PLAYER;
 	//Who controls this player
 	this.client = client;
 }
@@ -11,9 +14,9 @@ player.prototype.constructor = player;
 /**
  * Given a json format, construct a player
  */
-blob.prototype.create_json = function(params) {
-	return new blob(params.x, params.y, params.vx, params.vy, params.r,
-	                params.m, params.client);
+player.prototype.create_json = function(params) {
+	return new player(params.e, params.x, params.y, params.vx, params.vy,
+	                params.r, params.m, params.client);
 }
 /**
  * Convert a player object into JSON.
@@ -29,8 +32,8 @@ player.prototype.toJSON = function() {
  * Zero means inconclusive.
  * The other blob will be asked to compare against this one.
  */
-blob.prototype.compare = function(other) {
-	if (other.type != engine.BLOB || other.type != engine.PLAYER) {
+player.prototype.compare = function(other) {
+	if (other.type != this.e.BLOB || other.type != this.e.PLAYER) {
 		return 0;
 	}
 	return this.r - other.r;
