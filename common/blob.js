@@ -1,15 +1,39 @@
+(function(exports) {
 /**
  * This file contains code required by the client and server for blobs.
  */
-function blob(x, y, vx, vy, r) {
-	this.type = Game.BLOB;
-	this.id = Game.id()
+var blob = function(x, y, vx, vy, r, m) {
+	this.type = engine.BLOB;
+	this.id = engine.alloc_id();
 	this.x = x;
 	this.y = y;
 	this.vx = vx;
 	this.vy = vy;
 	this.r = r;
+	this.m = m;
+	//The acceleration of the object, used by 
+	this.ax = 0;
+	this.ay = 0;
 }
+/**
+ * Cleans up after the blob. 
+ */
+blob.prototype.destroy = function() {
+	engine.free_id(this.id);
+}
+/**
+ * Given a json format, construct a blob
+ */
+blob.prototype.create_json = function(params) {
+	return new blob(params.x, params.y, params.vx, params.vy, params.r,
+	                params.m);
+}
+blob.prototype.clone = function() {
+	return blob.create_json(this);
+}
+/**
+ * Calculate the area of this blob.
+ */
 blob.prototype.area = function() {
 	return Math.PI * this.r * this.r;
 }
@@ -32,16 +56,11 @@ blob.prototype.transfer_area = function(a) {
  * The other blob will be asked to compare against this one.
  */
 blob.prototype.compare = function(other) {
-	if (other.type != Game.BLOB) {
+	if (other.type != engine.BLOB) {
 		return 0;
 	}
 	return this.r - other.r;
 }
-/**
- * If a specific type of blob needs to do something every step.
- * Attractors and repellers use this as well as any AI.
- */
-blob.prototype.game_step = null;
 /**
  * Returns a JSON representation of a blob.
  */
@@ -49,18 +68,24 @@ blob.prototype.toJSON = function() {
 	var obj = {};
 	obj["type"] = this.blob;
 	obj["x"] = this.x;
-	obj["x"] = this.y;
+	obj["y"] = this.y;
 	obj["vx"] = this.vx;
 	obj["vy"] = this.vy;
 	obj["r"] = this.r;
+	obj["m"] = this.m;
 	return obj;
 }
+blob.prototype.calc = null;
 /**
- * Determines where the blob will be after a delta timestep.
+ * Determines where the blob will be after a step.
  */
-Blob.prototype.compute_state = function(delta) {
-	var b = this.clone();
-	b.x += this.vx * delta / 10;
-	b.y += this.vy * delta / 10;
-	return b;
+blob.prototype.step = function(e, ms) {
+	this.x += this.vx * ms / 1000 + this.ax * ms / 2000000;
+	this.y += this.vy * ms / 1000 + this.ay * ms / 2000000;
+	this.ax = 0;
+	this.ay = 0;
 };
+
+exports.blob = blob;
+
+})(typeof global === "undefined" ? window : exports);
