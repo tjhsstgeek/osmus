@@ -2,7 +2,7 @@
 /**
  * This file contains code required by the client and server for blobs.
  */
-var blob = function(e, x, y, vx, vy, r, m) {
+var blob = function(e, x, y, vx, vy, r, density) {
 	this.type = e.BLOB;
 	this.id = e.alloc_id();
 	this.e = e;
@@ -11,7 +11,7 @@ var blob = function(e, x, y, vx, vy, r, m) {
 	this.vx = vx;
 	this.vy = vy;
 	this.r = r;
-	this.m = m;
+	this.m = density;
 	//The acceleration of the object
 	this.ax = 0;
 	this.ay = 0;
@@ -27,7 +27,7 @@ blob.prototype.destroy = function() {
  */
 blob.prototype.create_json = function(params) {
 	return new blob(params.e, params.x, params.y, params.vx, params.vy,
-	                params.r, params.m);
+	                params.r, params.density);
 }
 /**
  * Clones (copies) a blob.
@@ -86,8 +86,8 @@ blob.prototype.calc = null;
  * Determines where the blob will be after a step.
  */
 blob.prototype.step = function(ms) {
-	this.x += this.vx * ms / 1000 + this.ax * ms / 2000000;
-	this.y += this.vy * ms / 1000 + this.ay * ms / 2000000;
+	this.x += this.vx * ms / 1000 + this.ax * ms * ms / 2000000;
+	this.y += this.vy * ms / 1000 + this.ay * ms * ms / 2000000;
 	this.ax = 0;
 	this.ay = 0;
 };
@@ -96,6 +96,27 @@ blob.prototype.step = function(ms) {
  */
 blob.prototype.alive = function() {
 	return this.r > 1;
+}
+/**
+ * Has this blob absorb part of the other blob.
+ * This blob was determined to be bigger.
+ */
+blob.prototype.absorb = function(o) {
+	var overlap = this.e.overlap(this, o);
+	//console.log("objects", o1, "and", o2, "overlapped", overlap, "pixels");
+	//This will calculate the minimum change required for the two blobs
+	//to not overlap.
+	//This works even if one blob is smaller.
+	var dR = (-overlap + o.r - this.r + Math.sqrt(-overlap * overlap + 
+	          2 * overlap * o.r + o.r * o.r + 2 * overlap * this.r - 
+	          2 * this.r * o.r + this.r * this.r)) / 2;
+	var dr = overlap + dR;
+	var adiff = 2 * this.r * dR + dR * dR;
+	var a_b = this.area();
+	this.vx = (a_b * this.vx + adiff * o.vx) / (a_b + adiff);
+	this.vy = (a_b * this.vy + adiff * o.vy) / (a_b + adiff);
+	this.transfer_radius(dR);
+	o.transfer_radius(-dr);
 }
 
 exports.blob = blob;
