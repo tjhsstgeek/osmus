@@ -21,8 +21,13 @@ var engine = function(w, h) {
 engine.prototype.GRAV_CONSTANT = 0.0000000000667300;
 engine.prototype.BLOB = 1;
 engine.prototype.PLAYER = 2;
-engine.prototype.ATTRACTOR = 3;
 engine.prototype.ANTIMATTER = 5;
+/**
+ * The osmos attractor type.
+ * The strength of this attractor grows with size and has no effect on blobs
+ * that absorb it.
+ */
+engine.prototype.O_ATTRACTOR = 6;
 
 
 /**
@@ -189,17 +194,7 @@ engine.prototype.transfer = function(o1, o2) {
 		s = o1;
 		d = o2;
 	}
-	var overlap = this.overlap(o1, o2);
-	//console.log("objects", o1, "and", o2, "overlapped", overlap, "pixels");
-	var smaller = s.clone();
-	smaller.transfer_radius(-overlap);
-	var adiff = s.area() - smaller.area();
-	smaller.destroy();
-	var a_b = d.area();
-	d.vx = (a_b * d.vx + adiff * s.vx) / (a_b + adiff);
-	d.vy = (a_b * d.vy + adiff * s.vy) / (a_b + adiff);
-	d.transfer_area(adiff);
-	s.transfer_area(-adiff);
+	d.absorb(s);
 	//alert the server and client that someone got hurt
 	if (!d.alive()) {
 		console.log("object", d, "died");
@@ -225,6 +220,22 @@ engine.prototype.timer = function(interval) {
 		lastUpdate = date;
 	}, interval);
 };
+/**
+ *
+ */
+engine.prototype.toJSON = function() {
+	var obj = {};
+	obj["grav"] = {};
+	for (var a in this.grav) {
+		obj["grav"][a] = this.grav[a].toJSON();
+	}
+	obj["base"] = {};
+	for (var a in this.base) {
+		obj["base"][a] = this.base[a].toJSON();
+	}
+	obj["w"] = this.w;
+	obj["h"] = this.h;
+}
 
 exports.engine = engine;
 
