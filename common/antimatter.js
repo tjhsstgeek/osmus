@@ -7,13 +7,6 @@ var antimatter = function(e, x, y, vx, vy, r, density) {
 	this.type = e.ANTIMATTER;
 }
 /**
- * Given a json format, construct a blob
- */
-antimatter.prototype.create_json = function(params) {
-	return new antimatter(params.e, params.x, params.y, params.vx,
-	                      params.vy, params.r, params.density);
-}
-/**
  * A positive area means area is added, otherwise removed.
  */
 antimatter.prototype.transfer_area = function(a) {

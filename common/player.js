@@ -14,14 +14,14 @@ player.prototype.constructor = player;
 /**
  * Given a json format, construct a player
  */
-player.prototype.create_json = function(params) {
-	return new player(params.e, params.x, params.y, params.vx, params.vy,
+player.prototype.load = function(params, e) {
+	return new player(e, params.x, params.y, params.vx, params.vy,
 	                params.r, params.density, params.client);
 }
 /**
  * Convert a player object into JSON.
  */
-player.prototype.toJSON = function() {
+player.prototype.save = function() {
 	var obj = blob.prototype.toJSON.call(this);
 	obj.client = this.client;
 	return obj;

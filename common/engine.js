@@ -1,10 +1,12 @@
 (function(exports) {
 
 var engine = function(w, h) {
-	//What are the blobs that have some sort of gravity.
+	//What blobs affect blobs every step
 	this.grav = new Array();
-	//What are the blobs that are affected by gravity.
+	//This contains all of the moving blobs
 	this.base = new Array();
+	//This contains all of the blob
+	this.blobs = new Array();
 	//How many steps should we take in one second.
 	//If everything is slow and there are no gravitrons, then this may be 
 	//small, otherwise this should be larger to account for timestep errors. 
@@ -150,6 +152,7 @@ engine.prototype.overlap = function(o1, o2) {
  * Removes a blob from the engine.
  */
 engine.prototype.remove = function(o) {
+	delete this.blobs[o.id];
 	var i = this.grav.indexOf(o);
 	if (i != -1) {
 		this.grav.splice(i, 1);
@@ -163,6 +166,7 @@ engine.prototype.remove = function(o) {
  * Removes a blob from the engine.
  */
 engine.prototype.attach = function(o) {
+	this.blobs[o.id] = o;
 	if (o.calc) {
 		this.grav.push(o);
 	}
@@ -197,12 +201,12 @@ engine.prototype.transfer = function(o1, o2) {
 	d.absorb(s);
 	//alert the server and client that someone got hurt
 	if (!d.alive()) {
-		console.log("object", d, "died");
+		//console.log("object", d, "died");
 		this.remove(d);
 		d.destroy();
 	}
 	if (!s.alive()) {
-		console.log("object", s, "died");
+		//console.log("object", s, "died");
 		this.remove(s);
 		s.destroy();
 	}
@@ -214,7 +218,7 @@ engine.prototype.transfer = function(o1, o2) {
 engine.prototype.timer = function(interval) {
 	var lastUpdate = (new Date()).valueOf();
 	var ctx = this;
-	this.timer = setInterval(function() {
+	this.time = setInterval(function() {
 		var date = (new Date()).valueOf();
 		ctx.step_time(date - lastUpdate);
 		lastUpdate = date;
@@ -223,18 +227,47 @@ engine.prototype.timer = function(interval) {
 /**
  *
  */
-engine.prototype.toJSON = function() {
+engine.prototype.stop = function() {
+	clearInterval(this.time);
+}
+/**
+ *
+ */
+engine.prototype.save = function() {
 	var obj = {};
 	obj["grav"] = {};
 	for (var a in this.grav) {
-		obj["grav"][a] = this.grav[a].toJSON();
+		obj["grav"][a] = this.grav[a].id;
 	}
 	obj["base"] = {};
 	for (var a in this.base) {
-		obj["base"][a] = this.base[a].toJSON();
+		obj["base"][a] = this.base[a].id;
+	}
+	obj["blobs"] = {};
+	for (var a in this.blobs) {
+		obj["blobs"][a] = this.blobs[a].save();
 	}
 	obj["w"] = this.w;
 	obj["h"] = this.h;
+	obj["MS_PER_STEP"] = this.MS_PER_STEP;
+	return obj;
+}
+/**
+ *
+ */
+engine.prototype.load = function(o) {
+	var e = new engine(o.w, o.h);
+	e.MS_PER_STEP = o.MS_PER_STEP;
+	for (var a in o.blobs) {
+		e.blobs[a] = blob.prototype.load(o.blobs[a], e);
+	}
+	for (var a in o.grav) {
+		e.grav[a] = e.blobs[o.grav[a]];
+	}
+	for (var a in o.base) {
+		e.base[a] = e.blobs[o.base[a]];
+	}
+	return e;
 }
 
 exports.engine = engine;

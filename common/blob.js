@@ -11,7 +11,7 @@ var blob = function(e, x, y, vx, vy, r, density) {
 	this.vx = vx;
 	this.vy = vy;
 	this.r = r;
-	this.m = density;
+	this.density = density;
 	//The acceleration of the object
 	this.ax = 0;
 	this.ay = 0;
@@ -25,15 +25,15 @@ blob.prototype.destroy = function() {
 /**
  * Given a json format, construct a blob.
  */
-blob.prototype.create_json = function(params) {
-	return new blob(params.e, params.x, params.y, params.vx, params.vy,
+blob.prototype.load = function(params, e) {
+	return new blob(e, params.x, params.y, params.vx, params.vy,
 	                params.r, params.density);
 }
 /**
  * Clones (copies) a blob.
  */
 blob.prototype.clone = function() {
-	return this.create_json(this);
+	return this.load(this);
 }
 /**
  * Calculate the area of this blob.
@@ -70,7 +70,7 @@ blob.prototype.compare = function(other) {
 /**
  * Returns a JSON representation of a blob.
  */
-blob.prototype.toJSON = function() {
+blob.prototype.save = function() {
 	var obj = {};
 	obj["type"] = this.type;
 	obj["x"] = this.x;
@@ -78,7 +78,7 @@ blob.prototype.toJSON = function() {
 	obj["vx"] = this.vx;
 	obj["vy"] = this.vy;
 	obj["r"] = this.r;
-	obj["m"] = this.m;
+	obj["density"] = this.density;
 	return obj;
 }
 blob.prototype.calc = null;

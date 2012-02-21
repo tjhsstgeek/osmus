@@ -8,13 +8,6 @@ var o_attractor = function(e, x, y, vx, vy, r, density) {
 	this.type = e.O_ATTRACTOR;
 }
 /**
- * Given a json format, construct a blob
- */
-o_attractor.prototype.create_json = function(params) {
-	return new attractor(params.e, params.x, params.y, params.vx, params.vy,
-	                params.r, params.density);
-}
-/**
  * If these two blobs were to collide, which one would win.
  * One means this one, negative one means the other one.
  * Zero means inconclusive.
