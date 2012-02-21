@@ -12,7 +12,7 @@ var h = 480;
 
 var game = new engine(w, h);
 
-for (var a = 0;a < 100;a++) {
+for (var a = 0;a < 1000;a++) {
 	var b = new blob(game, Math.random() * 640, Math.random() * 480,
 	                 Math.random() * 10 - 5, Math.random() * 10 - 5,
 	                 Math.random() * 10, 1);
@@ -23,5 +23,7 @@ for (var a = 0;a < 100;a++) {
 game.timer(10);
 
 io.sockets.on('connection', function(socket) {
-	
+	socket.emit('start', {
+		state: game.save()
+	});
 });
