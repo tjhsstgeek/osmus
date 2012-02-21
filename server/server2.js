@@ -5,12 +5,6 @@ var engine = __engine.engine;
 var __blob = new require('../common/blob.js');
 var blob = __blob.blob;
 
-var __player = new require('../common/player.js');
-var player = __player.player;
-
-var __attractor = new require('../common/attractor.js');
-var attractor = __attractor.attractor;
-
 var level = new require('./level.js');
 
 var w = 640;
