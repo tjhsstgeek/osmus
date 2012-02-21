@@ -3,8 +3,8 @@
 var __blob = new require('../common/blob.js');
 var blob = __blob.blob;
 
-var player = function(e, x, y, vx, vy, r, m, client) {
-	blob.call(this, e, x, y, vx, vy, r, m);
+var player = function(e, x, y, vx, vy, r, density, client) {
+	blob.call(this, e, x, y, vx, vy, r, density);
 	this.type = e.PLAYER;
 	//Who controls this player
 	this.client = client;
@@ -16,7 +16,7 @@ player.prototype.constructor = player;
  */
 player.prototype.create_json = function(params) {
 	return new player(params.e, params.x, params.y, params.vx, params.vy,
-	                params.r, params.m, params.client);
+	                params.r, params.density, params.client);
 }
 /**
  * Convert a player object into JSON.
