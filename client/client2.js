@@ -16,11 +16,9 @@ socket.on('start', function(data) {
 	//sound.toggleSoundtrack();
 	console.log('recv state', data);
 	// Load the game
-	game.stop();
-	game = game.load(data.state);
+	game.reload(data.state);
 	// Setup the game progress loop
 	game.timer(10);
-	renderer.game = game;
 	// Start the renderer.
 	renderer.render();
 	// Check if there's a name specified
@@ -32,27 +30,32 @@ socket.on('start', function(data) {
 });
 
 socket.on('state', function(data) {
-  game.load(data.state);
+	game.reload(data.state);
 });
 
 // A new client joins.
 socket.on('join', function(data) {
-  console.log('recv join', data);
-  game.join(data.name);
-  if (data.isme) {
-    playerId = data.name;
-    // Set the hash
-    window.location.hash = '#' + data.name;
-  }
+	console.log('recv join', data);
+	if (data.isme) {
+		playerId = data.id;
+		// Set the hash
+		window.location.hash = '#' + data.name;
+	}
+});
+
+// A blob is updated. Partially absorbed, destroyed, or created
+socket.on('update', function(data) {
+	var b = game.load_blob(data);
+	game.attach(b);
 });
 
 // A client leaves.
 socket.on('leave', function(data) {
-  console.log('recv leave', data);
-  if (playerId == data.name) {
-    gameover('you were absorbed. play again?');
-  }
-  game.leave(data.name);
+	console.log('recv leave', data);
+	if (playerId == data.name) {
+		gameover('you were absorbed. play again?');
+	}
+	game.leave(data.name);
 });
 
 // A client shoots.

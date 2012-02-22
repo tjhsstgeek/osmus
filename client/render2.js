@@ -16,13 +16,17 @@ window.requestAnimFrame = (function(){
  */
 var CanvasRenderer = function(game) {
 	this.game = game;
+	this.swap = game;
+	this.zoom_x = 0;
+	this.zoom_y = 0;
+	this.zoom_m = 1;
 	this.canvas = document.getElementById('canvas');
 	this.context = this.canvas.getContext('2d');
 };
 
 CanvasRenderer.prototype.render = function() {
 	this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-	var objects = this.game.blobs;
+	var objects = this.game.base;
 	// Render the game state
 	for (var i in objects) {
 		var o = objects[i];
@@ -36,7 +40,7 @@ CanvasRenderer.prototype.render = function() {
 			this.renderObject_(o);
 		}
 	}
-
+	this.game = this.swap;
 	var ctx = this;
 	requestAnimFrame(function() {
 		ctx.render.call(ctx);
@@ -46,6 +50,15 @@ CanvasRenderer.prototype.render = function() {
 CanvasRenderer.prototype.renderObject_ = function(obj) {
 	var ctx = this.context;
 	ctx.fillStyle = (obj.type == this.game.PLAYER ? 'green' : 'red');
+	if (this.game.blobs[playerId]) {
+		var diff = this.game.blobs[playerId].compare(obj);
+		if (diff == 0) {
+			diff = -obj.compare(this.game.blobs[playerId]);
+		}
+		if (diff > 0) {
+			ctx.fillStyle = 'blue';
+		}
+	}
 	ctx.beginPath();
 	ctx.arc(obj.x, obj.y, obj.r, 0, 2 * Math.PI, true);
 	ctx.closePath();
