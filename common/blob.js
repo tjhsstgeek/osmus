@@ -1,4 +1,14 @@
 (function(exports) {
+
+//Thanks to KinLinDev for the code
+function extend(parent, child) {
+	function inheritance() {}
+	inheritance.prototype = parent.prototype;
+
+	child.prototype = new inheritance();
+	child.prototype.constructor = child;
+}
+
 /**
  * This file contains code required by the client and server for blobs.
  */
@@ -33,7 +43,7 @@ blob.prototype.load = function(params, e) {
  * Clones (copies) a blob.
  */
 blob.prototype.clone = function() {
-	return this.load(this);
+	return this.load(this, this.e);
 }
 /**
  * Calculate the area of this blob.
@@ -69,6 +79,7 @@ blob.prototype.compare = function(other) {
 }
 /**
  * Returns a JSON representation of a blob.
+ * The engine is not saved due to cyclic problems.
  */
 blob.prototype.save = function() {
 	var obj = {};
@@ -88,6 +99,8 @@ blob.prototype.calc = null;
 blob.prototype.step = function(ms) {
 	this.x += this.vx * ms / 1000 + this.ax * ms * ms / 2000000;
 	this.y += this.vy * ms / 1000 + this.ay * ms * ms / 2000000;
+	this.vx += this.ax * ms / 1000;
+	this.vy += this.ay * ms / 1000;
 	this.ax = 0;
 	this.ay = 0;
 };
@@ -120,5 +133,6 @@ blob.prototype.absorb = function(o) {
 }
 
 exports.blob = blob;
+exports.extend = extend;
 
 })(typeof global === "undefined" ? window : exports);

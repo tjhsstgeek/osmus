@@ -104,7 +104,7 @@ engine.prototype.step_multi = function(steps) {
  * Steps several milliseconds into the future.
  */
 engine.prototype.step_time = function(ms) {
-	this.step_multi((this.leftover + ms) / this.MS_PER_STEP);
+	this.step_multi(parseInt((this.leftover + ms) / this.MS_PER_STEP));
 	this.leftover = (this.leftover + ms) % this.MS_PER_STEP;
 	//this.check_victory();
 }
@@ -142,7 +142,8 @@ engine.prototype.intersect = function(o1, o2) {
 	return this.distance2(o1, o2) < (o1.r + o2.r) * (o1.r + o2.r);
 }
 /**
- * Checks if two blobs intersect.
+ * Checks the amount the two blobs intersect.
+ * 
  */
 engine.prototype.overlap = function(o1, o2) {
 	var d = (o1.r + o2.r) - this.distance(o1, o2);
@@ -183,9 +184,11 @@ engine.prototype.transfer = function(o1, o2) {
 	if (diff == 0) {
 		diff = -o2.compare(o1);
 		if (diff == 0) {
-			console.log("objects", o1, "and", o2, "could not be",
-			            "compared");
-			console.log("assuming object", o1, "is bigger");
+			console.log("comparison failure of types",
+			            o1.type, "and", o2.type);
+			//console.log("objects", o1, "and", o2, "could not be",
+			//            "compared");
+			//console.log("assuming object", o1, "is bigger");
 		}
 		
 	}
@@ -234,6 +237,7 @@ engine.prototype.stop = function() {
  *
  */
 engine.prototype.save = function() {
+	console.log("saving engine state");
 	var obj = {};
 	obj["grav"] = {};
 	for (var a in this.grav) {
@@ -249,24 +253,53 @@ engine.prototype.save = function() {
 	}
 	obj["w"] = this.w;
 	obj["h"] = this.h;
+	//This isn't required, but is a good choice
 	obj["MS_PER_STEP"] = this.MS_PER_STEP;
 	return obj;
 }
 /**
- *
+ * Reloads the current engine.
+ */
+engine.prototype.load_blob = function(o) {
+	if (o.type == this.BLOB) {
+		return blob.prototype.load(o, this);
+	} else if (o.type == this.PLAYER) {
+		return player.prototype.load(o, this);
+	} else if (o.type == this.O_ATTRACTOR) {
+		return o_attractor.prototype.load(o, this);
+	} else {
+		console.log("Not a valid blob type", o.type);
+		return null;
+	}
+}
+/**
+ * Reloads the current engine.
+ */
+engine.prototype.reload = function(o) {
+	this.MS_PER_STEP = o.MS_PER_STEP;
+	this.w = o.w;
+	this.h = o.h;
+	this.blobs = [];
+	this.grav = [];
+	this.base = [];
+	this.leftover = 0;
+	this.avail_id = 0;
+	for (var a in o.blobs) {
+		this.blobs[a] = this.load_blob(o.blobs[a]);
+	}
+	for (var a in o.grav) {
+		this.grav[a] = this.blobs[o.grav[a]];
+	}
+	for (var a in o.base) {
+		this.base[a] = this.blobs[o.base[a]];
+	}
+}
+/**
+ * Loads a new engine.
  */
 engine.prototype.load = function(o) {
 	var e = new engine(o.w, o.h);
-	e.MS_PER_STEP = o.MS_PER_STEP;
-	for (var a in o.blobs) {
-		e.blobs[a] = blob.prototype.load(o.blobs[a], e);
-	}
-	for (var a in o.grav) {
-		e.grav[a] = e.blobs[o.grav[a]];
-	}
-	for (var a in o.base) {
-		e.base[a] = e.blobs[o.base[a]];
-	}
+	e.reload(o);
 	return e;
 }
 
